@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>登录</title>
+
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="http://116.63.181.221:8085/vant/vant.min.css">
+
+    <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+    <script src="http://116.63.181.221:8085/vue/vue.min.js"></script>
+    <script src="http://116.63.181.221:8085/vue/vue-router.min.js"></script>
+    <script src="http://116.63.181.221:8085/axios/axios.min.js"></script>
+    <script src="http://116.63.181.221:8085/vant/vant.min.js"></script>
+    <script src="http://116.63.181.221:8085/requirejs/require.min.js"></script>
+    <script src="http://116.63.181.221:8085/vue/vue-loader.js"></script>
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        .login-box {
+            background: #f4f8ff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            padding: 20px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .van-form {
+            width: 100%;
+            border-radius: 20px;
+        }
+
+        .van-nav-bar {
+            background: #cfe1ed;
+        }
+
+        .van-checkbox__label {
+            color: #686868;
+        }
+
+        .van-nav-bar__left,
+        .van-nav-bar__right {
+            right: 0;
+            color: #8a99eb;
+            font-weight: bold;
+        }
+
+        .current-active {
+            background: skyblue;
+        }
+
+        .van-index-bar {
+            height: calc(100vh - 46px);
+            overflow: scroll;
+        }
+
+        .forget-pass-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            margin: 14px 0;
+        }
+
+        .forget-pass {
+            color: #738bdf;
+        }
+
+        .login-btn {
+            width: 100%;
+            margin-top: 60px;
+        }
+
+        .sub-btn {
+            background: linear-gradient(to right top, #61a3f1, #7b99df);
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+
+<body>
+    <div id="app">
+        <div class="login-box">
+            <div class="login">
+                <img src="" alt="" style="height: 100px; width: 100px; margin: 20px 0; border-radius: 20px" />
+                <br />
+                <van-form @submit="onSubmit">
+                    <van-field v-model="form.username" label-width="30px" name="用户名" label="用户名" placeholder="用户名"
+                        :rules="[{ required: true, message: '请填写用户名' }]">
+                        <template #label>
+                            <van-icon name="manager" color="#738bdf" />
+                        </template>
+                    </van-field>
+                    <van-field v-model="form.password" type="password" name="密码" label="密码" label-width="30px"
+                        placeholder="密码" :rules="[{ required: true, message: '请填写密码' }]">
+                        <template #label>
+                            <van-icon name="lock" color="#738bdf" />
+                        </template>
+                    </van-field>
+                    <van-field readonly clickable label-width="30px" name="picker" :value="form.hospital"
+                        placeholder="点击选择医院" @click="isShowPoup = true">
+                        <template #label>
+                            <van-icon name="add-square" color="#738bdf" />
+                        </template>
+                    </van-field>
+                    <van-popup v-model="isShowPoup" position="bottom" round>
+                        <van-picker show-toolbar :columns="hospitalList" value-key="name" @confirm="onConfirm"
+                            @cancel="isShowPoup = false" />
+                    </van-popup>
+
+                    <small class="forget-pass-box">
+                        <van-checkbox v-model="radio" style="font-weight: bold;font-size: 12px;" icon-size="14px">记住我
+                        </van-checkbox>
+                        <a class="forget-pass" href="https://bing.com">忘记密码?</a>
+                        <!-- <span class="forget-pass" @click="go">
+                            忘记密码?
+                        </span> -->
+                    </small>
+
+                    <div class="login-btn">
+                        <van-button block type="info" native-type="submit" class="sub-btn">登录</van-button>
+                    </div>
+                </van-form>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    const main = new Vue({
+        el: '#app',
+        data() {
+            return {
+                cookie: "",
+                radio: "",
+                isShowPoup: false,
+                form: {},
+                hospitalList: [],
+            };
+        },
+        methods: {
+            getInit() {},
+            onSubmit() {
+                axios
+                    .post("http://118.190.96.122:54012/account/login", {
+                        hospitalId: this.form.hospitalId,
+                        username: this.form.username,
+                        password: this.form.password,
+                    })
+                    .then((res) => {
+                        if (res.data.success) {
+                            let token = res.data.data;
+                            window.localStorage.setItem("token", token)
+                        }
+                        vant.Toast(res.data.msg);
+                    });
+            },
+            onConfirm(value) {
+                this.form.hospitalId = value.id;
+                this.form.hospital = value.name;
+                this.isShowPoup = false;
+            },
+            go() {
+                location.href = "https://bing.com"
+            }
+        },
+        mounted() {
+            let _this = this;
+            //设置请求头部
+            axios
+                .get("http://m.mrtcloud.com/public/hospital.json")
+                .then(function (res) {
+                    _this.hospitalList = res.data;
+                });
+        },
+    });
+</script>
+
+</html>
